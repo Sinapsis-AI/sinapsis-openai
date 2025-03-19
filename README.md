@@ -165,7 +165,7 @@ This configuration defines an **agent** and a sequence of **templates** to creat
 > [!IMPORTANT]
 >Attributes specified under the `*_init` keys (e.g., `openai_init`) correspond directly to the OpenAi client parameters, while the ones under the `create` are directly associated to the arguments expected in the create method. Ensure that values are assigned correctly according to the official [OpenAI documentation](https://platform.openai.com/docs/overview).
 >
-> The TextInput template correspond to [sinapsis-data-readers](https://github.com/Sinapsis-AI/sinapsis-data-tools/tree/main/packages/sinapsis_data_readers). If you want to use the example, please make sure you install the packages.
+> The TextInput template correspond to [sinapsis-data-readers](https://github.com/Sinapsis-AI/sinapsis-data-tools/tree/main/packages/sinapsis_data_readers). If you want to use the example, please make sure you install the package.
 >
 
 To run the config, use the CLI:
