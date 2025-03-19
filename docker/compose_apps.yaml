@@ -1,0 +1,19 @@
+services:
+
+  sinapsis-openai-inference:
+    extends:
+      service: sinapsis-openai
+      file: compose.yaml
+    container_name: sinapsis-openai-inference
+    environment:
+      AGENT_CONFIG_PATH: /app/src/sinapsis_openai/configs/config_image_creation.yaml
+    volumes:
+      - "../src/sinapsis_openai/configs/:/app/src/sinapsis_openai/configs/"
+      - "../webapps/:/app/webapps"
+    command: /app/.venv/bin/sinapsis run src/sinapsis_openai/configs/config_audio_generation.yaml
+
+  sinapsis-openai-gradio:
+    extends:
+      service: sinapsis-openai-inference
+    container_name: sinapsis-openai-gradio
+    command: python3 webapps/image_creation.py

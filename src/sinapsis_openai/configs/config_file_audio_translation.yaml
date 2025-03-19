@@ -1,0 +1,25 @@
+agent:
+  name: my_test_agent
+  description: "OpenAI audio translation"
+
+templates:
+
+- template_name: InputTemplate
+  class_name: InputTemplate
+  attributes: {}
+
+- template_name: AudioReadertoBytes
+  class_name: AudioReaderToBytes
+  template_input: InputTemplate
+  attributes:
+    audio_file_path : '<path/to/audio>' ##replace value
+
+- template_name: OpenAIChat
+  class_name: OpenAIAudioTranscriptionWrapper
+  template_input: AudioReadertoBytes
+  attributes:
+    model : 'whisper-1'
+    output_dir: test_audio.mp4
+    openai_init: {}
+    create:
+      language : es

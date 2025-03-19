@@ -1,0 +1,17 @@
+services:
+  sinapsis-openai: &default
+    image: sinapsis-openai:base
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile-dev
+      ssh:
+        - default
+    shm_size: '8gb'
+    environment:
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: /lib/python3.10/:/app/.venv/lib/python3.10/site-packages
+      GRADIO_SHARE_APP: ${GRADIO_SHARE_APP:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - "~/.cache/sinapsis/:/root/.cache/sinapsis"
+    network_mode: "host"

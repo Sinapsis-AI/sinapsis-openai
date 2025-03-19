@@ -1,0 +1,28 @@
+agent:
+  name: my_test_agent
+  description: "OpenAI Image Creation"
+
+templates:
+
+- template_name: InputTemplate
+  class_name: InputTemplate
+  attributes: {}
+
+- template_name: TextInput
+  class_name: TextInput
+  template_input: InputTemplate
+  attributes:
+    text : cat with boots
+
+- template_name: OpenAIImageCreation
+  class_name: OpenAIImageCreationWrapper
+  template_input: TextInput
+  attributes:
+    model : dall-e-3
+    url : True
+    openai_init: {}
+    generate:
+      n: 1
+      quality: standard
+      size: 1024x1024
+
