@@ -1,10 +1,10 @@
 [project]
 name = "sinapsis-openai"
-version = "0.1.0"
+version = "0.1.1"
 description = "sinapsis module to handle OpenAI modules for chat completion, image edition and creation, audio generation, among other tasks"
 authors = [{ name = "SinapsisAI", email = "dev@sinapsis.tech" }]
 readme = "README.md"
-license = { file = "LICENSE" }
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
     "openai>=1.55.2",
@@ -56,12 +56,9 @@ lint.ignore = ['ANN401']
 line-length = 120
 show-fixes = true
 
-[tool.setuptools]
-license-files = []
 
 [project.urls]
 Homepage = "https://sinapsis.tech"
 Documentation = "https://docs.sinapsis.tech/docs"
 Tutorials = "https://docs.sinapsis.tech/tutorials"
 Repository = "https://github.com/Sinapsis-AI/sinapsis-openai.git"
-
