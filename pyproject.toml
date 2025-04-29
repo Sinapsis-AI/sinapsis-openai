@@ -1,6 +1,6 @@
 [project]
 name = "sinapsis-openai"
-version = "0.1.1"
+version = "0.1.2"
 description = "sinapsis module to handle OpenAI modules for chat completion, image edition and creation, audio generation, among other tasks"
 authors = [{ name = "SinapsisAI", email = "dev@sinapsis.tech" }]
 readme = "README.md"
@@ -13,7 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 webapp-gradio = [
-    "gradio>=5.21.0",
+    "sinapsis[webapp]>=0.2.7",
 ]
 data-readers = [
     "sinapsis-data-readers>=0.1.0",

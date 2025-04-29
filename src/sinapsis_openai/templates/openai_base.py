@@ -14,7 +14,7 @@ from sinapsis_core.template_base.dynamic_template import (
     BaseDynamicWrapperTemplate,
     WrapperEntryConfig,
 )
-from sinapsis_core.template_base.template import TemplateAttributeType
+from sinapsis_core.template_base.base_models import TemplateAttributeType
 
 OpenAICreateType = Union[ChatCompletion, Transcription, Image, Embedding, Translation, str, Any, ImagesResponse]
 
