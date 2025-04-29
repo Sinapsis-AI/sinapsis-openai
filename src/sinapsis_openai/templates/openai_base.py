@@ -10,11 +10,11 @@ from openai.types.chat import ChatCompletion
 from openai.types.embedding import Embedding
 from openai.types.image import Image
 from sinapsis_core.data_containers.data_packet import DataContainer, Packet
+from sinapsis_core.template_base.base_models import TemplateAttributeType
 from sinapsis_core.template_base.dynamic_template import (
     BaseDynamicWrapperTemplate,
     WrapperEntryConfig,
 )
-from sinapsis_core.template_base.base_models import TemplateAttributeType
 
 OpenAICreateType = Union[ChatCompletion, Transcription, Image, Embedding, Translation, str, Any, ImagesResponse]
 

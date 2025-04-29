@@ -4,10 +4,10 @@ from typing import Any, cast
 
 from openai.types import ChatModel
 from sinapsis_core.data_containers.data_packet import DataContainer, Packet, TextPacket
+from sinapsis_core.template_base.base_models import TemplateAttributes
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
-from sinapsis_core.template_base.base_models import TemplateAttributes
 from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS
 
 from sinapsis_openai.helpers.openai_env_var_keys import OPENAI_API_KEY

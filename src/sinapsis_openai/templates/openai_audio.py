@@ -122,8 +122,6 @@ class OpenAIAudioTranslation(OpenAIAudioTranscription):
 
     Usage example:
 
-    Usage example:
-
     agent:
       name: my_test_agent
     templates:
