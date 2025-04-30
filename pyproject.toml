@@ -1,6 +1,6 @@
 [project]
 name = "sinapsis-openai"
-version = "0.1.3"
+version = "0.1.4"
 description = "sinapsis module to handle OpenAI modules for chat completion, image edition and creation, audio generation, among other tasks"
 authors = [{ name = "SinapsisAI", email = "dev@sinapsis.tech" }]
 readme = "README.md"
