@@ -6,7 +6,7 @@ from typing import Any, Literal, cast
 from openai import NOT_GIVEN
 from openai.types import ImageModel
 from sinapsis_core.data_containers.data_packet import DataContainer, ImagePacket
-from sinapsis_core.template_base.base_models import TemplateAttributes
+from sinapsis_core.template_base.base_models import OutputTypes, TemplateAttributes, UIPropertiesMetadata
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
@@ -58,6 +58,7 @@ class OpenAIImageCreation(OpenAIBase):
             )
         ],
     )
+    UIProperties = UIPropertiesMetadata(category="OpenAI", output_type=OutputTypes.IMAGE)
 
     class AttributesBaseModel(TemplateAttributes):
         """Attributes for the OpenAIImageCreation.

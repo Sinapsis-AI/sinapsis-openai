@@ -10,7 +10,7 @@ from openai.types.chat import ChatCompletion
 from openai.types.embedding import Embedding
 from openai.types.image import Image
 from sinapsis_core.data_containers.data_packet import DataContainer, Packet
-from sinapsis_core.template_base.base_models import TemplateAttributeType
+from sinapsis_core.template_base.base_models import OutputTypes, TemplateAttributeType, UIPropertiesMetadata
 from sinapsis_core.template_base.dynamic_template import (
     BaseDynamicWrapperTemplate,
     WrapperEntryConfig,
@@ -36,6 +36,7 @@ class OpenAIBase(BaseDynamicWrapperTemplate):
 
     CLIENT = OpenAI
     PACKET_TYPE_NAME = "texts"
+    UIProperties = UIPropertiesMetadata(category="OpenAI", output_type=OutputTypes.TEXT)
 
     WrapperEntry = WrapperEntryConfig(wrapped_object=CLIENT)
 

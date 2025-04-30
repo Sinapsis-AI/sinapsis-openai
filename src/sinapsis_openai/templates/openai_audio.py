@@ -8,7 +8,7 @@ from openai import _legacy_response
 from openai.types import AudioModel
 from openai.types.audio import SpeechModel
 from sinapsis_core.data_containers.data_packet import AudioPacket, DataContainer, Packet
-from sinapsis_core.template_base import TemplateAttributes
+from sinapsis_core.template_base.base_models import OutputTypes, TemplateAttributes, UIPropertiesMetadata
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
@@ -75,6 +75,7 @@ class OpenAIAudioTranscription(OpenAIChatCompletion):
         model: AudioModel
 
     PACKET_TYPE_NAME: str = "audios"
+    UIProperties = UIPropertiesMetadata(category="LlamaIndex", output_type=OutputTypes.TEXT)
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:
@@ -201,6 +202,7 @@ class OpenAIAudioCreation(OpenAIAudioTranscription):
     )
 
     PACKET_TYPE_NAME = "texts"
+    UIProperties = UIPropertiesMetadata(category="OpenAI", output_type=OutputTypes.AUDIO)
 
     class AttributesBaseModel(TemplateAttributes):
         """
