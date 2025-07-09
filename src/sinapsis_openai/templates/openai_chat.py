@@ -4,13 +4,13 @@ from typing import Any, cast
 
 from openai.types import ChatModel
 from sinapsis_core.data_containers.data_packet import DataContainer, Packet, TextPacket
-from sinapsis_core.template_base.base_models import TemplateAttributes
+from sinapsis_core.template_base.base_models import TemplateAttributes, TemplateAttributeType
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
 from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS
 
-from sinapsis_openai.helpers.openai_env_var_keys import OPENAI_API_KEY
+from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
 from sinapsis_openai.helpers.openai_keys import OpenAIKeys
 from sinapsis_openai.templates.openai_base import OpenAIBase, OpenAICreateType
 
@@ -57,7 +57,7 @@ class OpenAIChatCompletion(OpenAIBase):
         template_name_suffix="ChatWrapper",
         additional_callables_to_inspect=[
             WrapperEntryConfig(
-                wrapped_object=OpenAIBase.CLIENT(api_key=OPENAI_API_KEY).chat.completions.create,
+                wrapped_object=OpenAIBase.CLIENT(api_key=OpenAIEnvVars.OPENAI_API_KEY.value).chat.completions.create,
                 exclude_method_attributes=[OpenAIKeys.messages, OpenAIKeys.audio, OpenAIKeys.model],
             )
         ],
@@ -70,6 +70,10 @@ class OpenAIChatCompletion(OpenAIBase):
         """
 
         model: ChatModel
+
+    def __init__(self, attributes: TemplateAttributeType) -> None:
+        super().__init__(attributes)
+        self.create = self.openai.chat.completions.create
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:

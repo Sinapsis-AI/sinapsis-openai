@@ -16,6 +16,8 @@ from sinapsis_core.template_base.dynamic_template import (
     WrapperEntryConfig,
 )
 
+from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
+
 OpenAICreateType = Union[ChatCompletion, Transcription, Image, Embedding, Translation, str, Any, ImagesResponse]
 
 
@@ -42,8 +44,8 @@ class OpenAIBase(BaseDynamicWrapperTemplate):
 
     def __init__(self, attributes: TemplateAttributeType) -> None:
         super().__init__(attributes)
-        self.openai = self.CLIENT(**self.attributes.openai_init.model_dump())
-        self.create = self.wrapped_callable
+        self.api_key = OpenAIEnvVars.OPENAI_API_KEY.value or self.attributes.openai_init.api_key
+        self.openai = self.CLIENT(api_key=self.api_key, **self.attributes.openai_init.model_dump(exclude="api_key"))
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:
@@ -89,7 +91,7 @@ class OpenAIBase(BaseDynamicWrapperTemplate):
                 if self.attributes.response_format == "url":
                     return results.data[0].url
                 else:
-                    return results.data[0].base64_json
+                    return results.data[0].b64_json
             return ""
         elif isinstance(results, Embedding):
             return results.embedding

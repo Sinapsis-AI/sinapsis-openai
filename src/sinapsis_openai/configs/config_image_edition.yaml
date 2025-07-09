@@ -1,0 +1,26 @@
+agent:
+  name: image_edition_agent
+  description: "OpenAI Image Edition with Mask"
+
+templates:
+- template_name: InputTemplate
+  class_name: InputTemplate
+  attributes: {}
+
+- template_name: TextInput
+  class_name: TextInput
+  template_input: InputTemplate
+  attributes:
+    text: "Add a hat to the image"
+
+- template_name: OpenAIImageEdition
+  class_name: OpenAIImageEditionWrapper
+  template_input: TextInput
+  attributes:
+    model: "gpt-image-1"
+    response_format: "b64_json"
+    path_to_image: ""
+    path_to_mask: ""
+    openai_init: {}
+    edit:
+      n: 1

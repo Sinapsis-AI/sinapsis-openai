@@ -3,16 +3,21 @@
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from openai import NOT_GIVEN
+from openai import NOT_GIVEN, APIConnectionError, BadRequestError
 from openai.types import ImageModel
 from sinapsis_core.data_containers.data_packet import DataContainer, ImagePacket
-from sinapsis_core.template_base.base_models import OutputTypes, TemplateAttributes, UIPropertiesMetadata
+from sinapsis_core.template_base.base_models import (
+    OutputTypes,
+    TemplateAttributes,
+    TemplateAttributeType,
+    UIPropertiesMetadata,
+)
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
 from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS
 
-from sinapsis_openai.helpers.openai_env_var_keys import OPENAI_API_KEY
+from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
 from sinapsis_openai.helpers.openai_keys import OpenAIKeys
 from sinapsis_openai.templates.openai_base import OpenAIBase, OpenAICreateType
 
@@ -53,7 +58,7 @@ class OpenAIImageCreation(OpenAIBase):
         template_name_suffix="ImageCreationWrapper",
         additional_callables_to_inspect=[
             WrapperEntryConfig(
-                wrapped_object=OpenAIBase.CLIENT(api_key=OPENAI_API_KEY).images.generate,
+                wrapped_object=OpenAIBase.CLIENT(api_key=OpenAIEnvVars.OPENAI_API_KEY.value).images.generate,
                 exclude_method_attributes=[OpenAIKeys.prompt, OpenAIKeys.model, OpenAIKeys.response_format],
             )
         ],
@@ -72,6 +77,10 @@ class OpenAIImageCreation(OpenAIBase):
 
         model: ImageModel
         response_format: Literal["url", "b64_json"] = "url"
+
+    def __init__(self, attributes: TemplateAttributeType) -> None:
+        super().__init__(attributes)
+        self.create = self.openai.images.generate
 
     def parse_results(self, responses: list | dict | Any, container: DataContainer) -> DataContainer:
         """
@@ -156,7 +165,7 @@ class OpenAIImageEdition(OpenAIImageCreation):
         Configuration attributes for the OpenAIImageEdition template.
 
         Attributes:
-            model (Literal["dall-e-2"]): The fixed image model used for
+            model (Literal["dall-e-2", "gpt-image-1"]): The fixed image model used for
             image edition tasks.
             path_to_mask (str | None): Optional file path to a mask image.
             If provided, the mask must have the same dimensions as the
@@ -165,7 +174,7 @@ class OpenAIImageEdition(OpenAIImageCreation):
             be edited. The image is expected to be in `png` format.
         """
 
-        model: Literal["dall-e-2"] = "dall-e-2"
+        model: Literal["dall-e-2", "gpt-image-1"]
         path_to_mask: str | None = None
         path_to_image: str
 
@@ -174,7 +183,7 @@ class OpenAIImageEdition(OpenAIImageCreation):
         template_name_suffix="ImageEditionWrapper",
         additional_callables_to_inspect=[
             WrapperEntryConfig(
-                wrapped_object=OpenAIBase.CLIENT(api_key=OPENAI_API_KEY).images.edit,
+                wrapped_object=OpenAIBase.CLIENT(api_key=OpenAIEnvVars.OPENAI_API_KEY.value).images.edit,
                 exclude_method_attributes=[
                     OpenAIKeys.image,
                     OpenAIKeys.mask,
@@ -186,6 +195,10 @@ class OpenAIImageEdition(OpenAIImageCreation):
         ],
     )
     PACKET_TYPE_NAME = "texts"
+
+    def __init__(self, attributes: TemplateAttributeType) -> None:
+        super().__init__(attributes)
+        self.create = self.openai.images.edit
 
     def return_create_response(self, content: str | list | bytes) -> OpenAICreateType:
         """
@@ -207,13 +220,24 @@ class OpenAIImageEdition(OpenAIImageCreation):
             OpenAICreateType: The raw response from the OpenAI image editing API.
         """
         mask = Path(self.attributes.path_to_mask) if self.attributes.path_to_mask else NOT_GIVEN
-        return self.create(
-            image=Path(self.attributes.path_to_image),
-            mask=mask,
-            prompt=content,
-            response_format=self.attributes.response_format,
-            **self.attributes.edit.model_dump(),
-        )
+
+        try:
+            return self.create(
+                image=Path(self.attributes.path_to_image),
+                mask=mask,
+                prompt=content,
+                model=self.attributes.model,
+                response_format=self.attributes.response_format,
+                **self.attributes.edit.model_dump(),
+            )
+        except (APIConnectionError, BadRequestError):
+            return self.create(
+                image=Path(self.attributes.path_to_image),
+                mask=mask,
+                prompt=content,
+                model=self.attributes.model,
+                **self.attributes.edit.model_dump(),
+            )
 
 
 def __getattr__(name: str) -> Template:

@@ -12,7 +12,7 @@ class _OpenAIEnvVars(BaseModel):
 
     OPENAI_API_KEY: EnvVarEntry = EnvVarEntry(
         var_name="OPENAI_API_KEY",
-        default_value=" ",
+        default_value="",
         allowed_values=None,
         description="set api key for OPENAI",
     )

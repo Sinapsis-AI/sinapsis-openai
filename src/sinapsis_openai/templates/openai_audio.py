@@ -8,13 +8,18 @@ from openai import _legacy_response
 from openai.types import AudioModel
 from openai.types.audio import SpeechModel
 from sinapsis_core.data_containers.data_packet import AudioPacket, DataContainer, Packet
-from sinapsis_core.template_base.base_models import OutputTypes, TemplateAttributes, UIPropertiesMetadata
+from sinapsis_core.template_base.base_models import (
+    OutputTypes,
+    TemplateAttributes,
+    TemplateAttributeType,
+    UIPropertiesMetadata,
+)
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
 from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS, SINAPSIS_CACHE_DIR
 
-from sinapsis_openai.helpers.openai_env_var_keys import OPENAI_API_KEY
+from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
 from sinapsis_openai.helpers.openai_keys import OpenAIKeys
 from sinapsis_openai.templates.openai_base import OpenAICreateType
 from sinapsis_openai.templates.openai_chat import OpenAIChatCompletion
@@ -31,7 +36,7 @@ class OpenAIAudioTranscription(OpenAIChatCompletion):
     extracted from the data packet and that the audio model is configured
     exclusively through the template attributes.
     PACKET_TYPE_NAME indicates that this template process AudioPackets
-    stored in the audios field of DataContainer
+    stored in the audio field of DataContainer
 
     Usage example:
 
@@ -59,7 +64,9 @@ class OpenAIAudioTranscription(OpenAIChatCompletion):
         template_name_suffix="AudioTranscriptionWrapper",
         additional_callables_to_inspect=[
             WrapperEntryConfig(
-                wrapped_object=OpenAIChatCompletion.CLIENT(api_key=OPENAI_API_KEY).audio.transcriptions.create,
+                wrapped_object=OpenAIChatCompletion.CLIENT(
+                    api_key=OpenAIEnvVars.OPENAI_API_KEY.value
+                ).audio.transcriptions.create,
                 exclude_method_attributes=[OpenAIKeys.file, OpenAIKeys.model],
             )
         ],
@@ -76,6 +83,10 @@ class OpenAIAudioTranscription(OpenAIChatCompletion):
 
     PACKET_TYPE_NAME: str = "audios"
     UIProperties = UIPropertiesMetadata(category="LlamaIndex", output_type=OutputTypes.TEXT)
+
+    def __init__(self, attributes: TemplateAttributeType) -> None:
+        super().__init__(attributes)
+        self.create = self.openai.audio.transcriptions.create
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:
@@ -149,12 +160,18 @@ class OpenAIAudioTranslation(OpenAIAudioTranscription):
         template_name_suffix="AudioTranslationWrapper",
         additional_callables_to_inspect=[
             WrapperEntryConfig(
-                wrapped_object=OpenAIChatCompletion.CLIENT(api_key=OPENAI_API_KEY).audio.translations.create,
+                wrapped_object=OpenAIChatCompletion.CLIENT(
+                    api_key=OpenAIEnvVars.OPENAI_API_KEY.value
+                ).audio.translations.create,
                 exclude_method_attributes=[OpenAIKeys.file, OpenAIKeys.model],
             )
         ],
     )
     PACKET_TYPE_NAME = "audios"
+
+    def __init__(self, attributes: TemplateAttributeType) -> None:
+        super().__init__(attributes)
+        self.create = self.openai.audio.translations.create
 
 
 class OpenAIAudioCreation(OpenAIAudioTranscription):
@@ -195,7 +212,9 @@ class OpenAIAudioCreation(OpenAIAudioTranscription):
         template_name_suffix="AudioCreationWrapper",
         additional_callables_to_inspect=[
             WrapperEntryConfig(
-                wrapped_object=OpenAIChatCompletion.CLIENT(api_key=OPENAI_API_KEY).audio.speech.create,
+                wrapped_object=OpenAIChatCompletion.CLIENT(
+                    api_key=OpenAIEnvVars.OPENAI_API_KEY.value
+                ).audio.speech.create,
                 exclude_method_attributes=[OpenAIKeys.input, OpenAIKeys.model],
             )
         ],
@@ -203,6 +222,10 @@ class OpenAIAudioCreation(OpenAIAudioTranscription):
 
     PACKET_TYPE_NAME = "texts"
     UIProperties = UIPropertiesMetadata(category="OpenAI", output_type=OutputTypes.AUDIO)
+
+    def __init__(self, attributes: TemplateAttributeType) -> None:
+        super().__init__(attributes)
+        self.create = self.openai.audio.speech.create
 
     class AttributesBaseModel(TemplateAttributes):
         """
