@@ -3,7 +3,8 @@
 
 from typing import Any, Union
 
-from openai import APIConnectionError, BadRequestError, OpenAI
+from openai._client import OpenAI
+from openai._exceptions import APIConnectionError, BadRequestError
 from openai.types import ImagesResponse
 from openai.types.audio import Transcription, Translation
 from openai.types.chat import ChatCompletion
@@ -17,6 +18,7 @@ from sinapsis_core.template_base.dynamic_template import (
 )
 
 from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
+from sinapsis_openai.helpers.tags import Tags
 
 OpenAICreateType = Union[ChatCompletion, Transcription, Image, Embedding, Translation, str, Any, ImagesResponse]
 
@@ -38,14 +40,26 @@ class OpenAIBase(BaseDynamicWrapperTemplate):
 
     CLIENT = OpenAI
     PACKET_TYPE_NAME = "texts"
-    UIProperties = UIPropertiesMetadata(category="OpenAI", output_type=OutputTypes.TEXT)
+    UIProperties = UIPropertiesMetadata(
+        category="OpenAI",
+        output_type=OutputTypes.TEXT,
+        tags=[Tags.DYNAMIC, Tags.OPENAI, Tags.PROMPT, Tags.TEXT],
+    )
 
     WrapperEntry = WrapperEntryConfig(wrapped_object=CLIENT)
 
     def __init__(self, attributes: TemplateAttributeType) -> None:
         super().__init__(attributes)
         self.api_key = OpenAIEnvVars.OPENAI_API_KEY.value or self.attributes.openai_init.api_key
-        self.openai = self.CLIENT(api_key=self.api_key, **self.attributes.openai_init.model_dump(exclude="api_key"))
+        init_raw_items = self.attributes.openai_init.model_dump()
+        init_not_not_given = {k: v for k, v in init_raw_items.items() if not (k == "api_key" or v == "NOT_GIVEN")}
+        create_raw_items = self.unpack_create_items()
+        self.not_not_given = {k: v for k, v in create_raw_items.items() if not (k == "api_key" or v == "NOT_GIVEN")}
+        self.openai = self.CLIENT(api_key=self.api_key, **init_not_not_given)
+
+    def unpack_create_items(self) -> dict:
+        """Method to unpack the specific create method for the OpenAI module"""
+        return self.attributes.create.model_dump()
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:
@@ -136,13 +150,17 @@ class OpenAIBase(BaseDynamicWrapperTemplate):
         """
         message = self.unpack_packet_content(packet)
         try:
-            results = self.return_create_response(message)
+            response = self.return_create_response(message)
+            results = self.process_response(response)
 
         except (APIConnectionError, BadRequestError) as err:
             self.logger.warning(f"Error processing request: {err}")
             results = None
 
         return results
+
+    def process_response(self, response: OpenAICreateType) -> Any:
+        return response
 
     def parse_results(self, responses: str | dict | Any, container: DataContainer) -> DataContainer:
         """

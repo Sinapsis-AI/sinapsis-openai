@@ -17,7 +17,7 @@ templates:
   class_name: OpenAIImageEditionWrapper
   template_input: TextInput
   attributes:
-    model: "gpt-image-1"
+    model: dall-e-2
     response_format: "b64_json"
     path_to_image: ""
     path_to_mask: ""

@@ -3,7 +3,8 @@
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from openai import NOT_GIVEN, APIConnectionError, BadRequestError
+from openai._exceptions import APIConnectionError, BadRequestError
+from openai._types import NOT_GIVEN
 from openai.types import ImageModel
 from sinapsis_core.data_containers.data_packet import DataContainer, ImagePacket
 from sinapsis_core.template_base.base_models import (
@@ -16,10 +17,15 @@ from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
 from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS
+from sinapsis_generic_data_tools.helpers.encode_img_base64 import decode_base64_to_numpy, fetch_url_to_numpy
 
 from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
 from sinapsis_openai.helpers.openai_keys import OpenAIKeys
-from sinapsis_openai.templates.openai_base import OpenAIBase, OpenAICreateType
+from sinapsis_openai.helpers.tags import Tags
+from sinapsis_openai.templates.openai_base import ImagesResponse, OpenAIBase, OpenAICreateType
+
+OpenAIImageUIProperties = OpenAIBase.UIProperties
+OpenAIImageUIProperties.tags.extend([Tags.IMAGE, Tags.IMAGE_GENERATION, Tags.IMAGE_EDITION])
 
 
 class OpenAIImageCreation(OpenAIBase):
@@ -80,7 +86,11 @@ class OpenAIImageCreation(OpenAIBase):
 
     def __init__(self, attributes: TemplateAttributeType) -> None:
         super().__init__(attributes)
+
         self.create = self.openai.images.generate
+
+    def unpack_create_items(self) -> dict:
+        return self.attributes.generate.model_dump()
 
     def parse_results(self, responses: list | dict | Any, container: DataContainer) -> DataContainer:
         """
@@ -115,12 +125,22 @@ class OpenAIImageCreation(OpenAIBase):
             OpenAICreateType: The raw response from the OpenAI image generation API.
         """
         content = cast(str, content)
-        return self.create(
+        response = self.create(
             prompt=content,
             model=self.attributes.model,
             response_format=self.attributes.response_format,
-            **self.attributes.generate.model_dump(),
+            **self.not_not_given,
         )
+        return response
+
+    def process_response(self, response: OpenAICreateType) -> Any:
+        response = cast(ImagesResponse, response)
+        if self.attributes.response_format == "b64_json":
+            image = decode_base64_to_numpy(response.data[0].b64_json)
+        else:
+            image = fetch_url_to_numpy(response.data[0].url)
+
+        return image
 
 
 class OpenAIImageEdition(OpenAIImageCreation):
@@ -199,6 +219,9 @@ class OpenAIImageEdition(OpenAIImageCreation):
     def __init__(self, attributes: TemplateAttributeType) -> None:
         super().__init__(attributes)
         self.create = self.openai.images.edit
+
+    def unpack_create_items(self) -> dict:
+        return self.attributes.edit.model_dump()
 
     def return_create_response(self, content: str | list | bytes) -> OpenAICreateType:
         """

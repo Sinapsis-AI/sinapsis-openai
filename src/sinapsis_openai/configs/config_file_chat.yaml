@@ -16,9 +16,9 @@ templates:
 
 - template_name: OpenAIChat
   class_name: OpenAIChatWrapper
-  template_input: TextInput
+  template_input: InputTemplate
   attributes:
-    model : gpt-4
+    model : gpt-4-turbo
     openai_init: {}
     create: {}
 

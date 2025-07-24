@@ -12,7 +12,11 @@ from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS
 
 from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
 from sinapsis_openai.helpers.openai_keys import OpenAIKeys
+from sinapsis_openai.helpers.tags import Tags
 from sinapsis_openai.templates.openai_base import OpenAIBase, OpenAICreateType
+
+OpenAIChatCompletionUIProperties = OpenAIBase.UIProperties
+OpenAIChatCompletionUIProperties.tags.extend([Tags.CHATBOTS])
 
 
 class OpenAIChatCompletion(OpenAIBase):
@@ -62,6 +66,7 @@ class OpenAIChatCompletion(OpenAIBase):
             )
         ],
     )
+    UIProperties = OpenAIChatCompletionUIProperties
 
     class AttributesBaseModel(TemplateAttributes):
         """AttributesBaseModel for OpenAIChatCompletion.
@@ -73,6 +78,7 @@ class OpenAIChatCompletion(OpenAIBase):
 
     def __init__(self, attributes: TemplateAttributeType) -> None:
         super().__init__(attributes)
+
         self.create = self.openai.chat.completions.create
 
     @staticmethod
@@ -110,7 +116,7 @@ class OpenAIChatCompletion(OpenAIBase):
             OpenAICreateType: The raw response received from the OpenAI chat completions endpoint.
         """
         content = cast(list, content)
-        return self.create(messages=content, model=self.attributes.model, **self.attributes.create.model_dump())
+        return self.create(messages=content, model=self.attributes.model, **self.not_not_given)
 
     def parse_results(self, responses: str | dict | Any, container: DataContainer) -> DataContainer:
         """

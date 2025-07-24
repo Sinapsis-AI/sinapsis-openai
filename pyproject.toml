@@ -1,6 +1,6 @@
 [project]
 name = "sinapsis-openai"
-version = "0.1.6"
+version = "0.1.7"
 description = "sinapsis module to handle OpenAI modules for chat completion, image edition and creation, audio generation, among other tasks"
 authors = [{ name = "SinapsisAI", email = "dev@sinapsis.tech" }]
 readme = "README.md"
@@ -19,6 +19,18 @@ data-readers = [
     "sinapsis-data-readers>=0.1.0",
 ]
 all = ["sinapsis-openai[webapp-gradio]", "sinapsis-openai[data-readers]"]
+audio-generation = [
+    "pydub>=0.25.1",
+    "sinapsis-openai[encode-results]",
+]
+image-generation = [
+    "numpy==1.26.4",
+    "pillow>=11.3.0",
+    "sinapsis-openai[encode-results]",
+]
+encode-results = [
+    "sinapsis-generic-data-tools>=0.1.8",
+]
 
 [dependency-groups]
 dev = [
@@ -29,6 +41,9 @@ dev = [
 [[tool.uv.index]]
 name = "sinapsis"
 url = "https://pypi.sinapsis.tech/"
+
+[tool.uv.sources]
+sinapsis-openai = { workspace = true }
 
 [tool.ruff]
 lint.select = [

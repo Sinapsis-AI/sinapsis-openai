@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import os
 from pathlib import Path
 from typing import Any, cast
 
-from openai import _legacy_response
 from openai.types import AudioModel
 from openai.types.audio import SpeechModel
 from sinapsis_core.data_containers.data_packet import AudioPacket, DataContainer, Packet
@@ -17,12 +15,20 @@ from sinapsis_core.template_base.base_models import (
 from sinapsis_core.template_base.dynamic_template import WrapperEntryConfig
 from sinapsis_core.template_base.dynamic_template_factory import make_dynamic_template
 from sinapsis_core.template_base.template import Template
-from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS, SINAPSIS_CACHE_DIR
+from sinapsis_core.utils.env_var_keys import SINAPSIS_BUILD_DOCS
+from sinapsis_generic_data_tools.helpers.audio_encoder import audio_bytes_to_numpy
 
 from sinapsis_openai.helpers.openai_env_var_keys import OpenAIEnvVars
 from sinapsis_openai.helpers.openai_keys import OpenAIKeys
+from sinapsis_openai.helpers.tags import Tags
 from sinapsis_openai.templates.openai_base import OpenAICreateType
 from sinapsis_openai.templates.openai_chat import OpenAIChatCompletion
+
+OpenAIAudioUIProperties = OpenAIChatCompletion.UIProperties
+OpenAIAudioUIProperties.output_type = OutputTypes.AUDIO
+OpenAIAudioUIProperties.tags.extend(
+    [Tags.AUDIO, Tags.TRANSCRIPTION, Tags.TRANSLATION, Tags.AUDIO_CREATION, Tags.TEXT_TO_SPEECH]
+)
 
 
 class OpenAIAudioTranscription(OpenAIChatCompletion):
@@ -82,11 +88,12 @@ class OpenAIAudioTranscription(OpenAIChatCompletion):
         model: AudioModel
 
     PACKET_TYPE_NAME: str = "audios"
-    UIProperties = UIPropertiesMetadata(category="LlamaIndex", output_type=OutputTypes.TEXT)
 
     def __init__(self, attributes: TemplateAttributeType) -> None:
         super().__init__(attributes)
         self.create = self.openai.audio.transcriptions.create
+
+    UIProperties = OpenAIAudioUIProperties
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:
@@ -114,11 +121,12 @@ class OpenAIAudioTranscription(OpenAIChatCompletion):
             OpenAICreateType: The raw response from the OpenAI transcription API.
         """
         content = cast(str, content)
-        return self.create(
+        response = self.create(
             file=Path(content),
             model=self.attributes.model,
-            **self.attributes.create.model_dump(),
+            **self.not_not_given,
         )
+        return response
 
 
 class OpenAIAudioTranslation(OpenAIAudioTranscription):
@@ -239,7 +247,6 @@ class OpenAIAudioCreation(OpenAIAudioTranscription):
         """
 
         model: SpeechModel
-        output_dir: str | None = "openai/openai_audio.mp4"
 
     @staticmethod
     def unpack_packet_content(packet: Packet) -> list | str:
@@ -266,32 +273,17 @@ class OpenAIAudioCreation(OpenAIAudioTranscription):
         Returns:
             OpenAICreateType: The raw API response containing the binary audio data or related information.
         """
-        return self.create(
+        response = self.create(
             input=content,
             model=self.attributes.model,
-            **self.attributes.create.model_dump(),
+            **self.not_not_given,
         )
+        return response
 
-    def generate_response_from_client(self, packet: Packet) -> OpenAICreateType:
-        """
-        Executes the audio creation API call by extracting the prompt from the packet,
-        invoking the wrapped API endpoint, and then streams the binary response to a file. The output file is saved in a
-        directory specified by the template attributes under output_dir (relative to the SINAPSIS_CACHE_DIR).
-        If the API call fails, an error is logged and None is returned.
-        Args:
-            packet (Packet): Packet to extract the input from.
-
-        Returns:
-            Any: The processed results.
-
-        Raises:
-            APIConnectionError: If the Connect API call fails.
-            BadRequestError: In the event of an invalid API request.
-        """
-        results = super().generate_response_from_client(packet)
-        results = cast(_legacy_response.HttpxBinaryResponseContent, results)
-        results.stream_to_file(os.path.join(SINAPSIS_CACHE_DIR, self.attributes.output_dir))
-        return os.path.join(SINAPSIS_CACHE_DIR, self.attributes.output_dir)
+    def process_response(self, response: OpenAICreateType) -> Any:
+        results = response.read()
+        samples, frame_rate = audio_bytes_to_numpy(results)
+        return [samples, frame_rate]
 
     def parse_results(self, responses: str | dict | Any, container: DataContainer) -> DataContainer:
         """
@@ -308,7 +300,7 @@ class OpenAIAudioCreation(OpenAIAudioTranscription):
         """
         _ = self
         for response in responses:
-            audio_packet = AudioPacket(content=response, source=response)
+            audio_packet = AudioPacket(content=response[0], sample_rate=response[1], source=self.instance_name)
             container.audios.append(audio_packet)
         return container
 
