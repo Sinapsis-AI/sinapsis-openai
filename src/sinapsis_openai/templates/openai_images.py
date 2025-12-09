@@ -6,7 +6,7 @@ from typing import Any, Literal, cast
 from openai._exceptions import APIConnectionError, BadRequestError
 from openai._types import NOT_GIVEN
 from openai.types import ImageModel
-from sinapsis_core.data_containers.data_packet import DataContainer, ImagePacket
+from sinapsis_core.data_containers.data_packet import DataContainer, ImageColor, ImagePacket
 from sinapsis_core.template_base.base_models import (
     OutputTypes,
     TemplateAttributes,
@@ -105,12 +105,14 @@ class OpenAIImageCreation(OpenAIBase):
             DataContainer: The modified container with appended ImagePackets.
         """
         for response in responses:
-            container.images.append(
-                ImagePacket(
-                    content=response,
-                    source=self.instance_name,
+            if response is not None:
+                container.images.append(
+                    ImagePacket(
+                        content=response,
+                        source=self.instance_name,
+                        color_space=ImageColor.RGB,
+                    )
                 )
-            )
         return container
 
     def return_create_response(self, content: str | list | bytes) -> OpenAICreateType:
